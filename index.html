@@ -398,6 +398,215 @@
   .tab-panel { display: none; }
   .tab-panel.active { display: block; }
 
+  /* --- PORTFOLIO TAB --- */
+  .portfolio-layout {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+
+  .portfolio-chart-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    position: sticky;
+    top: 1rem;
+  }
+
+  .portfolio-chart-section h3 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+
+  #pieCanvas {
+    display: block;
+    margin: 0 auto 1rem;
+  }
+
+  .pie-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    justify-content: center;
+    font-size: 0.75rem;
+  }
+
+  .pie-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pie-legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .portfolio-config {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .portfolio-config h3 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+  }
+
+  .config-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .config-row label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .config-row input, .config-row select {
+    padding: 0.5rem 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+    outline: none;
+  }
+
+  .config-row input:focus, .config-row select:focus {
+    border-color: var(--gold);
+  }
+
+  .config-row input[type="number"] { width: 160px; }
+
+  .btn-apply {
+    padding: 0.5rem 1.25rem;
+    background: linear-gradient(135deg, var(--gold), #d97706);
+    border: none;
+    border-radius: 6px;
+    color: #000;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-apply:hover { transform: scale(1.03); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+
+  .portfolio-table-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+
+  .portfolio-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .portfolio-table th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .portfolio-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.85rem;
+  }
+
+  .portfolio-table tr:last-child td { border-bottom: none; }
+  .portfolio-table tr:hover td { background: var(--surface2); }
+
+  .portfolio-table .alloc-bar-cell { width: 120px; }
+  .alloc-bar-bg {
+    width: 100%;
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .alloc-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s;
+  }
+
+  .portfolio-disclaimer {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 1.5rem;
+    line-height: 1.5;
+  }
+
+  .portfolio-total {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem 1.5rem;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .portfolio-total .pt-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .portfolio-total .pt-label {
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .portfolio-total .pt-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+
+  .cat-header td {
+    font-weight: 700 !important;
+    font-size: 0.75rem !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dim) !important;
+    padding-top: 1rem !important;
+  }
+
+  @media (max-width: 900px) {
+    .portfolio-layout {
+      grid-template-columns: 1fr;
+    }
+    .portfolio-chart-section { position: static; }
+  }
+
   @media (max-width: 640px) {
     header { padding: 1rem; }
     .container { padding: 1rem; }
@@ -442,6 +651,10 @@
     <span class="tab-dot dot-silver"></span>
     Prata
     <span class="tab-count" id="silverCount">0</span>
+  </button>
+  <button class="metal-tab" id="tabPortfolio" onclick="switchTab('portfolio')">
+    <span class="tab-dot" style="background:linear-gradient(135deg,var(--gold),var(--green))"></span>
+    Portfolio
   </button>
 </div>
 
@@ -492,6 +705,58 @@
         <thead><tr id="tableHeadSilver"></tr></thead>
         <tbody id="tableBodySilver"></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- PORTFOLIO TAB -->
+  <div class="tab-panel" id="panelPortfolio">
+    <div class="portfolio-disclaimer">
+      Este portfolio e puramente hipotetico e educacional. Nao constitui recomendacao de investimento.
+      Alocacoes sao baseadas em diversificacao por categoria e capitalizacao de mercado.
+      Consulte um profissional antes de tomar decisoes de investimento.
+    </div>
+
+    <div class="portfolio-config">
+      <h3>Configuracao</h3>
+      <div class="config-row">
+        <label>Capital Inicial (USD):</label>
+        <input type="number" id="portfolioAmount" value="100000" min="1000" step="1000">
+        <label>Perfil:</label>
+        <select id="portfolioProfile">
+          <option value="conservative">Conservador</option>
+          <option value="balanced" selected>Balanceado</option>
+          <option value="aggressive">Agressivo</option>
+        </select>
+        <button class="btn-apply" onclick="buildPortfolio()">Gerar Portfolio</button>
+      </div>
+    </div>
+
+    <div class="portfolio-total" id="portfolioTotal"></div>
+
+    <div class="portfolio-layout">
+      <div class="portfolio-chart-section">
+        <h3>Alocacao por Categoria</h3>
+        <canvas id="pieCanvas" width="340" height="340"></canvas>
+        <div class="pie-legend" id="pieLegend"></div>
+      </div>
+      <div class="portfolio-table-section">
+        <table class="portfolio-table">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Empresa</th>
+              <th>Categoria</th>
+              <th>Metal</th>
+              <th style="text-align:right">Peso %</th>
+              <th class="alloc-bar-cell"></th>
+              <th style="text-align:right">Valor (USD)</th>
+              <th style="text-align:right">Preco</th>
+              <th style="text-align:right">Acoes</th>
+            </tr>
+          </thead>
+          <tbody id="portfolioBody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -759,19 +1024,22 @@ function switchTab(tab) {
   activeTab = tab;
   document.getElementById('tabGold').className = 'metal-tab' + (tab === 'gold' ? ' active-gold' : '');
   document.getElementById('tabSilver').className = 'metal-tab' + (tab === 'silver' ? ' active-silver' : '');
+  document.getElementById('tabPortfolio').className = 'metal-tab' + (tab === 'portfolio' ? ' active-gold' : '');
   document.getElementById('panelGold').className = 'tab-panel' + (tab === 'gold' ? ' active' : '');
   document.getElementById('panelSilver').className = 'tab-panel' + (tab === 'silver' ? ' active' : '');
+  document.getElementById('panelPortfolio').className = 'tab-panel' + (tab === 'portfolio' ? ' active' : '');
 
   const icon = document.getElementById('logoIcon');
-  if (tab === 'gold') {
+  if (tab === 'gold' || tab === 'portfolio') {
     icon.className = 'logo-icon gold-icon';
-    icon.textContent = 'Au';
+    icon.textContent = tab === 'portfolio' ? '$' : 'Au';
   } else {
     icon.className = 'logo-icon silver-icon';
     icon.textContent = 'Ag';
   }
 
-  renderSummary();
+  if (tab !== 'portfolio') renderSummary();
+  if (tab === 'portfolio' && !portfolioBuilt) buildPortfolio();
 }
 
 // ===================== RENDERING =====================
@@ -998,6 +1266,242 @@ function scheduleRefresh() {
     el.textContent = `Refresh em ${nextRefresh}s`;
     if (nextRefresh <= 0) { clearInterval(refreshTimer); fetchAllData(); }
   }, 1000);
+}
+
+// ===================== PORTFOLIO =====================
+let portfolioBuilt = false;
+
+const PORTFOLIO_COLORS = [
+  '#f59e0b', '#d97706', '#b45309', '#92400e',  // gold shades
+  '#94a3b8', '#64748b', '#475569', '#334155',  // silver shades
+  '#10b981', '#059669', '#047857',              // green
+  '#6366f1', '#818cf8',                          // purple
+  '#ec4899', '#f43f5e',                          // pink/rose
+  '#06b6d4', '#0891b2',                          // cyan
+  '#84cc16', '#eab308', '#f97316',              // lime/yellow/orange
+];
+
+// Hypothetical allocation profiles
+const PROFILES = {
+  conservative: {
+    // Heavy on large-cap gold, ETFs, streamers. Light on silver/juniors
+    categories: [
+      { name: 'Gold Majors',        pct: 30, filter: (c) => c.type === 'miner' && c.primary === 'gold' && isMajor(c.ticker) },
+      { name: 'Gold ETFs',          pct: 25, filter: (c) => c.type === 'etf' && c.primary === 'gold' },
+      { name: 'Streamers/Royalty',   pct: 20, filter: (c) => c.type === 'streamer' },
+      { name: 'Gold Mid-Cap',       pct: 10, filter: (c) => c.type === 'miner' && c.primary === 'gold' && !isMajor(c.ticker) },
+      { name: 'Silver Miners',      pct: 8,  filter: (c) => c.type === 'miner' && (c.primary === 'silver' || c.primary === 'both') },
+      { name: 'Silver ETFs',        pct: 7,  filter: (c) => c.type === 'etf' && c.primary === 'silver' },
+    ]
+  },
+  balanced: {
+    categories: [
+      { name: 'Gold Majors',        pct: 25, filter: (c) => c.type === 'miner' && c.primary === 'gold' && isMajor(c.ticker) },
+      { name: 'Gold Mid-Cap',       pct: 15, filter: (c) => c.type === 'miner' && c.primary === 'gold' && !isMajor(c.ticker) },
+      { name: 'Streamers/Royalty',   pct: 15, filter: (c) => c.type === 'streamer' },
+      { name: 'Gold ETFs',          pct: 15, filter: (c) => c.type === 'etf' && c.primary === 'gold' },
+      { name: 'Silver Miners',      pct: 18, filter: (c) => c.type === 'miner' && (c.primary === 'silver' || c.primary === 'both') },
+      { name: 'Silver ETFs',        pct: 12, filter: (c) => c.type === 'etf' && c.primary === 'silver' },
+    ]
+  },
+  aggressive: {
+    categories: [
+      { name: 'Gold Mid-Cap',       pct: 25, filter: (c) => c.type === 'miner' && c.primary === 'gold' && !isMajor(c.ticker) },
+      { name: 'Silver Miners',      pct: 25, filter: (c) => c.type === 'miner' && (c.primary === 'silver' || c.primary === 'both') },
+      { name: 'Gold Majors',        pct: 20, filter: (c) => c.type === 'miner' && c.primary === 'gold' && isMajor(c.ticker) },
+      { name: 'Streamers/Royalty',   pct: 10, filter: (c) => c.type === 'streamer' },
+      { name: 'Gold ETFs',          pct: 10, filter: (c) => c.type === 'etf' && c.primary === 'gold' },
+      { name: 'Silver ETFs',        pct: 10, filter: (c) => c.type === 'etf' && c.primary === 'silver' },
+    ]
+  }
+};
+
+const MAJORS = ['NEM', 'GOLD', 'AEM', 'KGC', 'AU', 'GFI'];
+function isMajor(ticker) { return MAJORS.includes(ticker); }
+
+function buildPortfolio() {
+  const amount = parseFloat(document.getElementById('portfolioAmount').value) || 100000;
+  const profileKey = document.getElementById('portfolioProfile').value;
+  const profile = PROFILES[profileKey];
+  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES];
+  const allData = [...goldData, ...silverData];
+
+  const allocations = []; // { ticker, name, primary, category, catColor, weight, value, price, shares }
+  let colorIdx = 0;
+
+  profile.categories.forEach(cat => {
+    const matching = allCompanies.filter(cat.filter);
+    const catColor = PORTFOLIO_COLORS[colorIdx++ % PORTFOLIO_COLORS.length];
+    const catAmount = amount * (cat.pct / 100);
+
+    // Distribute equally within category, weighted by market cap if available
+    const withData = matching.map(c => {
+      const d = allData.find(d => d.ticker === c.ticker);
+      return { company: c, data: d, mcap: d?.marketCap || 1e6 };
+    });
+
+    const totalMcap = withData.reduce((s, w) => s + w.mcap, 0);
+
+    withData.forEach(w => {
+      const weight = totalMcap > 0 ? w.mcap / totalMcap : 1 / withData.length;
+      const value = catAmount * weight;
+      const price = w.data?.price || 1;
+      const shares = Math.floor(value / price);
+
+      allocations.push({
+        ticker: w.company.ticker,
+        name: w.company.name,
+        primary: w.company.primary,
+        category: cat.name,
+        catColor,
+        catPct: cat.pct,
+        weight: +(cat.pct * weight).toFixed(2),
+        value: +(shares * price).toFixed(2),
+        price,
+        shares,
+      });
+    });
+  });
+
+  const totalInvested = allocations.reduce((s, a) => s + a.value, 0);
+  const cash = +(amount - totalInvested).toFixed(2);
+  const numPositions = allocations.filter(a => a.shares > 0).length;
+
+  // Render totals
+  document.getElementById('portfolioTotal').innerHTML = `
+    <div class="pt-item">
+      <span class="pt-label">Capital Inicial</span>
+      <span class="pt-value">$${amount.toLocaleString()}</span>
+    </div>
+    <div class="pt-item">
+      <span class="pt-label">Investido</span>
+      <span class="pt-value" style="color:var(--green)">$${totalInvested.toLocaleString()}</span>
+    </div>
+    <div class="pt-item">
+      <span class="pt-label">Caixa Restante</span>
+      <span class="pt-value" style="color:var(--gold)">$${cash.toLocaleString()}</span>
+    </div>
+    <div class="pt-item">
+      <span class="pt-label">Posicoes</span>
+      <span class="pt-value">${numPositions}</span>
+    </div>
+    <div class="pt-item">
+      <span class="pt-label">Perfil</span>
+      <span class="pt-value" style="text-transform:capitalize">${profileKey}</span>
+    </div>
+  `;
+
+  // Render table
+  const body = document.getElementById('portfolioBody');
+  let lastCat = '';
+  body.innerHTML = allocations.map(a => {
+    let catRow = '';
+    if (a.category !== lastCat) {
+      lastCat = a.category;
+      catRow = `<tr class="cat-header"><td colspan="9" style="color:${a.catColor}">${a.category} (${a.catPct}%)</td></tr>`;
+    }
+    return catRow + `<tr>
+      <td class="ticker-cell gold-ticker">${a.ticker}</td>
+      <td>${a.name}</td>
+      <td><span class="type-cell miner" style="background:${a.catColor}22;color:${a.catColor}">${a.category.split(' ').pop()}</span></td>
+      <td>${metalBadge(a.primary)}</td>
+      <td style="text-align:right;font-weight:600">${a.weight}%</td>
+      <td class="alloc-bar-cell"><div class="alloc-bar-bg"><div class="alloc-bar-fill" style="width:${Math.min(a.weight * 3, 100)}%;background:${a.catColor}"></div></div></td>
+      <td style="text-align:right">$${a.value.toLocaleString()}</td>
+      <td style="text-align:right">$${a.price.toFixed(2)}</td>
+      <td style="text-align:right;font-weight:600">${a.shares}</td>
+    </tr>`;
+  }).join('');
+
+  // Draw pie chart
+  drawPieChart(profile.categories, allocations);
+  portfolioBuilt = true;
+}
+
+function drawPieChart(categories, allocations) {
+  const canvas = document.getElementById('pieCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const size = 340;
+
+  canvas.width = size * dpr;
+  canvas.height = size * dpr;
+  canvas.style.width = size + 'px';
+  canvas.style.height = size + 'px';
+  ctx.scale(dpr, dpr);
+
+  const cx = size / 2, cy = size / 2, radius = 140;
+  let startAngle = -Math.PI / 2;
+
+  ctx.clearRect(0, 0, size, size);
+
+  const catData = categories.map((cat, i) => {
+    const color = PORTFOLIO_COLORS[i % PORTFOLIO_COLORS.length];
+    const catAllocs = allocations.filter(a => a.category === cat.name);
+    const totalValue = catAllocs.reduce((s, a) => s + a.value, 0);
+    return { name: cat.name, pct: cat.pct, color, value: totalValue };
+  });
+
+  // Draw slices
+  catData.forEach(d => {
+    const sliceAngle = (d.pct / 100) * Math.PI * 2;
+    const endAngle = startAngle + sliceAngle;
+
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, radius, startAngle, endAngle);
+    ctx.closePath();
+    ctx.fillStyle = d.color;
+    ctx.fill();
+
+    // White border
+    ctx.strokeStyle = '#0a0e17';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Label
+    if (d.pct >= 5) {
+      const midAngle = startAngle + sliceAngle / 2;
+      const labelR = radius * 0.65;
+      const lx = cx + Math.cos(midAngle) * labelR;
+      const ly = cy + Math.sin(midAngle) * labelR;
+
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 13px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${d.pct}%`, lx, ly);
+    }
+
+    startAngle = endAngle;
+  });
+
+  // Inner circle (donut)
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius * 0.42, 0, Math.PI * 2);
+  ctx.fillStyle = '#111827';
+  ctx.fill();
+  ctx.strokeStyle = '#1e2d3d';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // Center text
+  ctx.fillStyle = '#e2e8f0';
+  ctx.font = 'bold 16px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Portfolio', cx, cy - 8);
+  ctx.font = '12px system-ui';
+  ctx.fillStyle = '#64748b';
+  ctx.fillText('Hipotetico', cx, cy + 10);
+
+  // Legend
+  document.getElementById('pieLegend').innerHTML = catData.map(d =>
+    `<span class="pie-legend-item">
+      <span class="pie-legend-dot" style="background:${d.color}"></span>
+      ${d.name} (${d.pct}%)
+    </span>`
+  ).join('');
 }
 
 // ===================== INIT =====================
