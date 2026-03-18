@@ -600,6 +600,108 @@
     padding-top: 1rem !important;
   }
 
+  /* Stock Selector */
+  .stock-selector {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .stock-selector h3 {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+  }
+  .selector-toolbar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .selector-toolbar input[type="text"] {
+    padding: 0.4rem 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.8rem;
+    width: 200px;
+    outline: none;
+  }
+  .selector-toolbar input[type="text"]:focus { border-color: var(--gold); }
+  .selector-toolbar input[type="text"]::placeholder { color: var(--text-dim); }
+  .btn-sm {
+    padding: 0.35rem 0.75rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--gold); color: var(--gold); }
+  .btn-sm.active-filter { border-color: var(--gold); color: var(--gold); background: rgba(245,158,11,0.1); }
+  .stock-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 0.5rem;
+    max-height: 320px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  .stock-grid::-webkit-scrollbar { width: 5px; }
+  .stock-grid::-webkit-scrollbar-track { background: var(--surface2); border-radius: 3px; }
+  .stock-grid::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .stock-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    background: var(--surface2);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .stock-item:hover { border-color: var(--border); }
+  .stock-item.checked { border-color: var(--gold); background: rgba(245,158,11,0.07); }
+  .stock-item input[type="checkbox"] {
+    accent-color: var(--gold);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+  .stock-item .si-ticker {
+    font-weight: 700;
+    font-size: 0.8rem;
+    color: var(--gold);
+    min-width: 45px;
+  }
+  .stock-item .si-name {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stock-item .si-metal {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+  .selector-count {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    margin-left: auto;
+  }
+  .selector-count strong { color: var(--gold); }
+
   @media (max-width: 900px) {
     .portfolio-layout {
       grid-template-columns: 1fr;
@@ -729,6 +831,21 @@
         </select>
         <button class="btn-apply" onclick="buildPortfolio()">Gerar Portfolio</button>
       </div>
+    </div>
+
+    <div class="stock-selector">
+      <h3>Selecionar Acoes</h3>
+      <div class="selector-toolbar">
+        <input type="text" id="stockSearch" placeholder="Buscar ticker ou nome..." oninput="filterStockSelector()">
+        <button class="btn-sm" onclick="toggleAllStocks(true)">Selecionar Todos</button>
+        <button class="btn-sm" onclick="toggleAllStocks(false)">Limpar Todos</button>
+        <button class="btn-sm" data-filter="gold" onclick="filterByType(this,'gold')">Ouro</button>
+        <button class="btn-sm" data-filter="silver" onclick="filterByType(this,'silver')">Prata</button>
+        <button class="btn-sm" data-filter="etf" onclick="filterByType(this,'etf')">ETFs</button>
+        <button class="btn-sm" data-filter="streamer" onclick="filterByType(this,'streamer')">Streamers</button>
+        <span class="selector-count"><strong id="selectedCount">0</strong> selecionadas</span>
+      </div>
+      <div class="stock-grid" id="stockGrid"></div>
     </div>
 
     <div class="portfolio-total" id="portfolioTotal"></div>
@@ -1039,7 +1156,10 @@ function switchTab(tab) {
   }
 
   if (tab !== 'portfolio') renderSummary();
-  if (tab === 'portfolio' && !portfolioBuilt) buildPortfolio();
+  if (tab === 'portfolio') {
+    if (!document.querySelector('.stock-item')) initStockSelector();
+    if (!portfolioBuilt) buildPortfolio();
+  }
 }
 
 // ===================== RENDERING =====================
@@ -1047,6 +1167,8 @@ function render() {
   renderSummary();
   renderPanel('gold');
   renderPanel('silver');
+  initStockSelector();
+  if (portfolioBuilt) buildPortfolio();
 }
 
 function getFiltered(tab) {
@@ -1268,6 +1390,86 @@ function scheduleRefresh() {
   }, 1000);
 }
 
+// ===================== STOCK SELECTOR =====================
+const selectedStocks = new Set();
+let selectorFilterType = null;
+
+function initStockSelector() {
+  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES];
+  // Select all by default
+  allCompanies.forEach(c => selectedStocks.add(c.ticker));
+  renderStockGrid();
+}
+
+function renderStockGrid() {
+  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES];
+  const search = (document.getElementById('stockSearch')?.value || '').toLowerCase();
+  const grid = document.getElementById('stockGrid');
+
+  const filtered = allCompanies.filter(c => {
+    if (search && !c.ticker.toLowerCase().includes(search) && !c.name.toLowerCase().includes(search)) return false;
+    if (selectorFilterType === 'gold' && c.primary !== 'gold') return false;
+    if (selectorFilterType === 'silver' && c.primary !== 'silver' && c.primary !== 'both') return false;
+    if (selectorFilterType === 'etf' && c.type !== 'etf') return false;
+    if (selectorFilterType === 'streamer' && c.type !== 'streamer') return false;
+    return true;
+  });
+
+  grid.innerHTML = filtered.map(c => {
+    const checked = selectedStocks.has(c.ticker);
+    return `<label class="stock-item ${checked ? 'checked' : ''}" data-ticker="${c.ticker}">
+      <input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleStock('${c.ticker}', this)">
+      <span class="si-ticker">${c.ticker}</span>
+      <span class="si-name">${c.name}</span>
+      <span class="si-metal">${metalBadge(c.primary)}</span>
+    </label>`;
+  }).join('');
+
+  updateSelectedCount();
+}
+
+function toggleStock(ticker, checkbox) {
+  if (checkbox.checked) {
+    selectedStocks.add(ticker);
+  } else {
+    selectedStocks.delete(ticker);
+  }
+  const item = checkbox.closest('.stock-item');
+  item.classList.toggle('checked', checkbox.checked);
+  updateSelectedCount();
+}
+
+function toggleAllStocks(state) {
+  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES];
+  if (state) {
+    allCompanies.forEach(c => selectedStocks.add(c.ticker));
+  } else {
+    selectedStocks.clear();
+  }
+  renderStockGrid();
+}
+
+function filterByType(btn, type) {
+  const wasActive = btn.classList.contains('active-filter');
+  document.querySelectorAll('.selector-toolbar .btn-sm[data-filter]').forEach(b => b.classList.remove('active-filter'));
+  if (wasActive) {
+    selectorFilterType = null;
+  } else {
+    selectorFilterType = type;
+    btn.classList.add('active-filter');
+  }
+  renderStockGrid();
+}
+
+function filterStockSelector() {
+  renderStockGrid();
+}
+
+function updateSelectedCount() {
+  const el = document.getElementById('selectedCount');
+  if (el) el.textContent = selectedStocks.size;
+}
+
 // ===================== PORTFOLIO =====================
 let portfolioBuilt = false;
 
@@ -1320,21 +1522,40 @@ const MAJORS = ['NEM', 'GOLD', 'AEM', 'KGC', 'AU', 'GFI'];
 function isMajor(ticker) { return MAJORS.includes(ticker); }
 
 function buildPortfolio() {
+  if (selectedStocks.size === 0) {
+    document.getElementById('portfolioTotal').innerHTML = '<div class="pt-item"><span class="pt-label">Nenhuma acao selecionada</span><span class="pt-value" style="color:var(--red)">Selecione pelo menos 1 acao acima</span></div>';
+    document.getElementById('portfolioBody').innerHTML = '';
+    const canvas = document.getElementById('pieCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('pieLegend').innerHTML = '';
+    return;
+  }
+
   const amount = parseFloat(document.getElementById('portfolioAmount').value) || 100000;
   const profileKey = document.getElementById('portfolioProfile').value;
   const profile = PROFILES[profileKey];
-  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES];
+  const allCompanies = [...GOLD_COMPANIES, ...SILVER_COMPANIES].filter(c => selectedStocks.has(c.ticker));
   const allData = [...goldData, ...silverData];
 
   const allocations = []; // { ticker, name, primary, category, catColor, weight, value, price, shares }
   let colorIdx = 0;
 
-  profile.categories.forEach(cat => {
-    const matching = allCompanies.filter(cat.filter);
-    const catColor = PORTFOLIO_COLORS[colorIdx++ % PORTFOLIO_COLORS.length];
-    const catAmount = amount * (cat.pct / 100);
+  // Recalculate category percentages: redistribute empty categories proportionally
+  const catWithMatches = profile.categories.map(cat => ({
+    ...cat,
+    matching: allCompanies.filter(cat.filter)
+  }));
+  const totalActivePct = catWithMatches.filter(c => c.matching.length > 0).reduce((s, c) => s + c.pct, 0);
 
-    // Distribute equally within category, weighted by market cap if available
+  catWithMatches.forEach(cat => {
+    const matching = cat.matching;
+    if (matching.length === 0) { colorIdx++; return; } // skip empty categories
+    const catColor = PORTFOLIO_COLORS[colorIdx++ % PORTFOLIO_COLORS.length];
+    const adjustedPct = totalActivePct > 0 ? (cat.pct / totalActivePct) * 100 : 0;
+    const catAmount = amount * (adjustedPct / 100);
+
+    // Distribute within category, weighted by market cap
     const withData = matching.map(c => {
       const d = allData.find(d => d.ticker === c.ticker);
       return { company: c, data: d, mcap: d?.marketCap || 1e6 };
@@ -1354,8 +1575,8 @@ function buildPortfolio() {
         primary: w.company.primary,
         category: cat.name,
         catColor,
-        catPct: cat.pct,
-        weight: +(cat.pct * weight).toFixed(2),
+        catPct: +adjustedPct.toFixed(1),
+        weight: +(adjustedPct * weight).toFixed(2),
         value: +(shares * price).toFixed(2),
         price,
         shares,
@@ -1414,7 +1635,16 @@ function buildPortfolio() {
   }).join('');
 
   // Draw pie chart
-  drawPieChart(profile.categories, allocations);
+  // Build pie data from actual allocations (respects selection)
+  const pieCategories = [];
+  const seen = new Set();
+  allocations.forEach(a => {
+    if (!seen.has(a.category)) {
+      seen.add(a.category);
+      pieCategories.push({ name: a.category, pct: a.catPct, color: a.catColor });
+    }
+  });
+  drawPieChart(pieCategories, allocations);
   portfolioBuilt = true;
 }
 
@@ -1436,7 +1666,7 @@ function drawPieChart(categories, allocations) {
   ctx.clearRect(0, 0, size, size);
 
   const catData = categories.map((cat, i) => {
-    const color = PORTFOLIO_COLORS[i % PORTFOLIO_COLORS.length];
+    const color = cat.color || PORTFOLIO_COLORS[i % PORTFOLIO_COLORS.length];
     const catAllocs = allocations.filter(a => a.category === cat.name);
     const totalValue = catAllocs.reduce((s, a) => s + a.value, 0);
     return { name: cat.name, pct: cat.pct, color, value: totalValue };
