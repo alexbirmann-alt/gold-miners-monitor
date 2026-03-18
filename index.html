@@ -711,30 +711,36 @@ async function fetchAllData() {
   dot.className = 'status-dot loading';
   statusText.textContent = 'Atualizando...';
 
-  let usedMock = false;
+  let liveCount = 0, totalCount = GOLD_COMPANIES.length + SILVER_COMPANIES.length;
 
   // Fetch gold
   try {
     const quotes = await fetchQuotes(GOLD_COMPANIES);
     goldData = processQuotes(GOLD_COMPANIES, quotes);
-  } catch (_) {
+    liveCount += goldData.length;
+  } catch (err) {
+    console.error('Finnhub gold fetch error:', err);
     goldData = processQuotes(GOLD_COMPANIES, generateMockData(GOLD_COMPANIES));
-    usedMock = true;
   }
 
   // Fetch silver
   try {
     const quotes = await fetchQuotes(SILVER_COMPANIES);
     silverData = processQuotes(SILVER_COMPANIES, quotes);
-  } catch (_) {
+    liveCount += silverData.length;
+  } catch (err) {
+    console.error('Finnhub silver fetch error:', err);
     silverData = processQuotes(SILVER_COMPANIES, generateMockData(SILVER_COMPANIES));
-    usedMock = true;
   }
 
-  if (usedMock) {
+  if (liveCount === 0) {
     dot.className = 'status-dot offline';
     statusText.textContent = 'Dados simulados';
-    showError('Nao foi possivel conectar ao Yahoo Finance. Exibindo dados simulados.');
+    showError('Nao foi possivel conectar ao Finnhub. Exibindo dados simulados.');
+  } else if (liveCount < totalCount) {
+    dot.className = 'status-dot live';
+    statusText.textContent = `Parcial (${liveCount}/${totalCount})`;
+    hideError();
   } else {
     dot.className = 'status-dot live';
     statusText.textContent = 'Ao vivo';
