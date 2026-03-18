@@ -624,26 +624,90 @@ function generateMockData(companies) {
 
 // ===================== FETCHING =====================
 const CORS_PROXIES = [
-  'https://corsproxy.io/?',
-  'https://api.allorigins.win/raw?url=',
+  url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
+  url => `https://thingproxy.freeboard.io/fetch/${url}`,
 ];
 
 async function fetchWithProxy(url) {
-  for (const proxy of CORS_PROXIES) {
-    try {
-      const res = await fetch(proxy + encodeURIComponent(url), { signal: AbortSignal.timeout(10000) });
-      if (res.ok) return await res.json();
-    } catch (_) {}
-  }
+  // Try all proxies in parallel, return first success
+  const controllers = [];
+  const promises = CORS_PROXIES.map((proxyFn, i) => {
+    const ctrl = new AbortController();
+    controllers.push(ctrl);
+    return fetch(proxyFn(url), { signal: ctrl.signal })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.text();
+      })
+      .then(text => {
+        // Some proxies wrap response — try to parse JSON
+        try { return JSON.parse(text); }
+        catch (_) {
+          // allorigins sometimes wraps in {contents: "..."}
+          const wrapped = JSON.parse(text);
+          if (wrapped?.contents) return JSON.parse(wrapped.contents);
+          throw new Error('Not JSON');
+        }
+      })
+      .then(data => ({ ok: true, data, index: i }))
+      .catch(err => ({ ok: false, index: i }));
+  });
+
+  const results = await Promise.all(promises);
+  const success = results.find(r => r.ok);
+  // Abort remaining
+  controllers.forEach(c => { try { c.abort(); } catch(_){} });
+  if (success) return success.data;
   throw new Error('All proxies failed');
 }
 
-async function fetchQuotes(companies) {
+// Strategy 1: batch quote endpoint (v7)
+async function fetchQuotesBatch(companies) {
   const tickers = companies.map(c => c.ticker).join(',');
   const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers}`;
   const data = await fetchWithProxy(url);
-  if (data?.quoteResponse?.result) return data.quoteResponse.result;
-  throw new Error('Invalid response');
+  if (data?.quoteResponse?.result?.length) return data.quoteResponse.result;
+  throw new Error('Invalid v7 response');
+}
+
+// Strategy 2: individual chart endpoints (v8) in parallel
+async function fetchQuotesIndividual(companies) {
+  const results = await Promise.allSettled(
+    companies.map(async c => {
+      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${c.ticker}?range=5d&interval=1d&includePrePost=false`;
+      const data = await fetchWithProxy(url);
+      const meta = data?.chart?.result?.[0]?.meta;
+      if (!meta) throw new Error('No meta');
+      return {
+        symbol: c.ticker,
+        regularMarketPrice: meta.regularMarketPrice,
+        regularMarketOpen: meta.previousClose || meta.chartPreviousClose,
+        regularMarketDayHigh: meta.regularMarketDayHigh || meta.regularMarketPrice,
+        regularMarketDayLow: meta.regularMarketDayLow || meta.regularMarketPrice,
+        regularMarketVolume: meta.regularMarketVolume || 0,
+        marketCap: 0,
+        chartPreviousClose: meta.chartPreviousClose || meta.previousClose,
+        fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || 0,
+        fiftyTwoWeekLow: meta.fiftyTwoWeekLow || 0,
+        trailingPE: null,
+        forwardPE: null,
+      };
+    })
+  );
+  const good = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+  if (good.length === 0) throw new Error('All individual fetches failed');
+  return good;
+}
+
+// Combined: try batch first, fallback to individual
+async function fetchQuotes(companies) {
+  try {
+    return await fetchQuotesBatch(companies);
+  } catch (_) {
+    return await fetchQuotesIndividual(companies);
+  }
 }
 
 function processQuotes(companies, quotes) {
