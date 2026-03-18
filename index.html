@@ -905,7 +905,7 @@ const GOLD_COMPANIES = [
   { ticker: 'FNV',  name: 'Franco-Nevada Corp',         type: 'streamer', primary: 'gold' },
   { ticker: 'WPM',  name: 'Wheaton Precious Metals',    type: 'streamer', primary: 'both' },
   { ticker: 'RGLD', name: 'Royal Gold Inc',             type: 'streamer', primary: 'gold' },
-  { ticker: 'SAND', name: 'Sandstorm Gold Ltd',         type: 'streamer', primary: 'gold' },
+  // SAND removed — not available on Finnhub US
   // ETFs
   { ticker: 'GDX',  name: 'VanEck Gold Miners ETF',     type: 'etf',     primary: 'gold' },
   { ticker: 'GDXJ', name: 'VanEck Junior Gold Miners',  type: 'etf',     primary: 'gold' },
@@ -919,8 +919,8 @@ const SILVER_COMPANIES = [
   { ticker: 'EXK',  name: 'Endeavour Silver Corp',      type: 'miner',   primary: 'silver' },
   { ticker: 'SVM',  name: 'Silvercorp Metals Inc',      type: 'miner',   primary: 'silver' },
   { ticker: 'MAG',  name: 'MAG Silver Corp',            type: 'miner',   primary: 'silver' },
-  { ticker: 'SILV', name: 'SilverCrest Metals',         type: 'miner',   primary: 'silver' },
-  { ticker: 'GATO', name: 'Gatos Silver Inc',           type: 'miner',   primary: 'silver' },
+  // SILV removed — not available on Finnhub US
+  // GATO removed — not available on Finnhub US
   // Prata + Ouro
   { ticker: 'PAAS', name: 'Pan American Silver',        type: 'miner',   primary: 'both' },
   { ticker: 'HL',   name: 'Hecla Mining Company',       type: 'miner',   primary: 'both' },
@@ -1063,7 +1063,7 @@ async function fetchQuotes(companies) {
 function processQuotes(companies, quotes) {
   return companies.map(company => {
     const q = quotes.find(r => r.symbol === company.ticker);
-    if (!q) return null;
+    if (!q || q.regularMarketPrice === 0) return null;
     const price = q.regularMarketPrice || 0;
     const prevClose = q.chartPreviousClose || q.regularMarketOpen || price;
     const change = +(price - prevClose).toFixed(2);
