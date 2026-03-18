@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precious Metals Monitor - NYSE</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0e17;
+    --surface: #111827;
+    --surface2: #1a2332;
+    --border: #1e2d3d;
+    --text: #e2e8f0;
+    --text-dim: #64748b;
+    --gold: #f59e0b;
+    --gold-dim: #92610a;
+    --silver: #94a3b8;
+    --silver-bright: #cbd5e1;
+    --green: #10b981;
+    --green-bg: rgba(16, 185, 129, 0.1);
+    --red: #ef4444;
+    --red-bg: rgba(239, 68, 68, 0.1);
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #111827 0%, #1a1a2e 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo { display: flex; align-items: center; gap: 0.75rem; }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem; font-weight: 700;
+  }
+  .logo-icon.gold-icon { background: linear-gradient(135deg, #f59e0b, #d97706); }
+  .logo-icon.silver-icon { background: linear-gradient(135deg, #94a3b8, #64748b); }
+
+  .logo h1 {
+    font-size: 1.25rem; font-weight: 700;
+    background: linear-gradient(90deg, var(--gold), #fbbf24);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  .logo span { font-size: 0.75rem; color: var(--text-dim); }
+
+  .header-info {
+    display: flex; align-items: center; gap: 1.5rem;
+    font-size: 0.85rem; color: var(--text-dim);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    display: inline-block; margin-right: 6px;
+  }
+  .status-dot.live { background: var(--green); animation: pulse 2s infinite; }
+  .status-dot.offline { background: var(--red); }
+  .status-dot.loading { background: var(--gold); animation: pulse 1s infinite; }
+
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* --- METAL TABS --- */
+  .metal-tabs {
+    display: flex; gap: 0;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+  }
+
+  .metal-tab {
+    padding: 0.85rem 1.5rem;
+    background: transparent;
+    color: var(--text-dim);
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+
+  .metal-tab:hover { color: var(--text); background: var(--surface2); }
+  .metal-tab.active-gold { color: var(--gold); border-bottom-color: var(--gold); }
+  .metal-tab.active-silver { color: var(--silver-bright); border-bottom-color: var(--silver-bright); }
+
+  .metal-tab .tab-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+  }
+  .metal-tab .tab-dot.dot-gold { background: var(--gold); }
+  .metal-tab .tab-dot.dot-silver { background: var(--silver); }
+
+  .tab-count {
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--surface2);
+    color: var(--text-dim);
+  }
+
+  /* --- SUMMARY BAR --- */
+  .summary-bar {
+    display: flex; gap: 1rem; padding: 0.75rem 2rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .summary-item {
+    display: flex; flex-direction: column; gap: 2px;
+    padding: 0.5rem 1rem;
+    background: var(--surface2);
+    border-radius: 8px;
+    min-width: 140px;
+  }
+
+  .summary-item .label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-item .value { font-size: 1.1rem; font-weight: 600; }
+
+  .container { padding: 1.5rem 2rem; }
+
+  .controls-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;
+  }
+
+  .view-toggle { display: flex; gap: 0.5rem; }
+
+  .view-toggle button, .filter-btn {
+    padding: 0.5rem 1rem;
+    background: var(--surface);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+  }
+
+  .view-toggle button.active { background: var(--gold-dim); color: #fff; border-color: var(--gold); }
+  .view-toggle button.active-silver-btn { background: #475569; color: #fff; border-color: var(--silver-bright); }
+  .filter-btn.active { background: var(--surface2); color: var(--text); border-color: var(--text-dim); }
+
+  .filter-buttons { display: flex; gap: 0.5rem; }
+
+  /* --- SECTION HEADER --- */
+  .section-header {
+    display: flex; align-items: center; gap: 0.75rem;
+    margin: 1.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header:first-of-type { margin-top: 0; }
+
+  .section-header h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .section-header.gold-section h2 { color: var(--gold); }
+  .section-header.silver-section h2 { color: var(--silver-bright); }
+  .section-header .badge {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: var(--surface2);
+    color: var(--text-dim);
+  }
+
+  /* --- CARDS --- */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s;
+    cursor: default;
+    position: relative;
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  }
+  .card:hover.gold-card { border-color: var(--gold); }
+  .card:hover.silver-card { border-color: var(--silver-bright); }
+
+  .card-type-badge {
+    position: absolute;
+    top: 10px; right: 10px;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .card-type-badge.etf { background: rgba(99,102,241,0.15); color: #818cf8; }
+  .card-type-badge.streamer { background: rgba(168,85,247,0.15); color: #a855f7; }
+  .card-type-badge.miner { background: rgba(34,197,94,0.15); color: #22c55e; }
+
+  .card-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 1rem; padding-right: 50px;
+  }
+
+  .card-ticker { font-size: 1.1rem; font-weight: 700; }
+  .card-ticker.gold-ticker { color: var(--gold); }
+  .card-ticker.silver-ticker { color: var(--silver-bright); }
+
+  .card-name { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+
+  .card-badge {
+    padding: 3px 8px; border-radius: 4px;
+    font-size: 0.7rem; font-weight: 600;
+  }
+  .card-badge.up { background: var(--green-bg); color: var(--green); }
+  .card-badge.down { background: var(--red-bg); color: var(--red); }
+
+  .card-price { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.75rem; }
+
+  .card-change { display: flex; gap: 1rem; font-size: 0.85rem; margin-bottom: 1rem; }
+
+  .card-meta {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.75rem;
+  }
+  .card-meta dt { color: var(--text-dim); }
+  .card-meta dd { color: var(--text); font-weight: 500; text-align: right; }
+
+  /* --- TABLE --- */
+  .table-wrapper {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+
+  table { width: 100%; border-collapse: collapse; }
+
+  th {
+    text-align: left; padding: 0.75rem 1rem;
+    font-size: 0.75rem; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--text-dim);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer; user-select: none; white-space: nowrap;
+  }
+  th:hover { color: var(--gold); }
+  th.sorted { color: var(--gold); }
+  th .sort-arrow { margin-left: 4px; font-size: 0.65rem; }
+
+  td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem; white-space: nowrap;
+  }
+  tr:hover td { background: var(--surface2); }
+  tr:last-child td { border-bottom: none; }
+
+  .ticker-cell { font-weight: 700; }
+  .ticker-cell.gold-ticker { color: var(--gold); }
+  .ticker-cell.silver-ticker { color: var(--silver-bright); }
+
+  .type-cell {
+    font-size: 0.7rem; padding: 2px 6px;
+    border-radius: 3px; font-weight: 600;
+    display: inline-block;
+  }
+  .type-cell.etf { background: rgba(99,102,241,0.15); color: #818cf8; }
+  .type-cell.streamer { background: rgba(168,85,247,0.15); color: #a855f7; }
+  .type-cell.miner { background: rgba(34,197,94,0.15); color: #22c55e; }
+
+  /* --- PRIMARY METAL INDICATOR --- */
+  .metal-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 2px 7px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    vertical-align: middle;
+  }
+  .metal-indicator.primary-gold {
+    background: rgba(245, 158, 11, 0.15);
+    color: var(--gold);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+  .metal-indicator.primary-silver {
+    background: rgba(148, 163, 184, 0.15);
+    color: var(--silver-bright);
+    border: 1px solid rgba(148, 163, 184, 0.3);
+  }
+  .metal-indicator.primary-both {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(148, 163, 184, 0.12));
+    color: #e2e8f0;
+    border: 1px solid rgba(200, 180, 120, 0.35);
+  }
+  .metal-indicator .mi-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+  .mi-dot.dot-g { background: var(--gold); }
+  .mi-dot.dot-s { background: var(--silver); }
+  .mi-dot-dual {
+    display: inline-flex; gap: 1px;
+  }
+  .mi-dot-dual .mi-dot { width: 5px; height: 5px; }
+
+  .card-primary {
+    margin-top: 4px;
+  }
+
+  /* card left border accent */
+  .card.border-gold { border-left: 3px solid var(--gold); }
+  .card.border-silver { border-left: 3px solid var(--silver); }
+  .card.border-both { border-left: 3px solid; border-image: linear-gradient(180deg, var(--gold), var(--silver)) 1; }
+
+  .up { color: var(--green); }
+  .down { color: var(--red); }
+
+  /* --- LOADING --- */
+  .loading-overlay {
+    position: fixed; inset: 0;
+    background: rgba(10, 14, 23, 0.9);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 100; transition: opacity 0.4s;
+  }
+  .loading-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .spinner {
+    width: 48px; height: 48px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-text { margin-top: 1rem; color: var(--text-dim); font-size: 0.9rem; }
+
+  .error-banner {
+    padding: 0.75rem 1.5rem;
+    background: var(--red-bg);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    color: var(--red);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .refresh-btn {
+    padding: 0.4rem 0.8rem;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s;
+  }
+  .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+  .countdown { font-variant-numeric: tabular-nums; }
+
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  @media (max-width: 640px) {
+    header { padding: 1rem; }
+    .container { padding: 1rem; }
+    .summary-bar { padding: 0.5rem 1rem; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .metal-tabs { padding: 0 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text">Carregando dados do mercado...</div>
+</div>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon gold-icon" id="logoIcon">Au</div>
+    <div>
+      <h1>Precious Metals Monitor</h1>
+      <span>NYSE &bull; Mineradoras, Streamers &amp; ETFs</span>
+    </div>
+  </div>
+  <div class="header-info">
+    <div>
+      <span class="status-dot live" id="statusDot"></span>
+      <span id="statusText">Ao vivo</span>
+    </div>
+    <div class="countdown" id="countdown"></div>
+    <button class="refresh-btn" onclick="fetchAllData()">Atualizar</button>
+  </div>
+</header>
+
+<div class="metal-tabs">
+  <button class="metal-tab active-gold" id="tabGold" onclick="switchTab('gold')">
+    <span class="tab-dot dot-gold"></span>
+    Ouro
+    <span class="tab-count" id="goldCount">0</span>
+  </button>
+  <button class="metal-tab" id="tabSilver" onclick="switchTab('silver')">
+    <span class="tab-dot dot-silver"></span>
+    Prata
+    <span class="tab-count" id="silverCount">0</span>
+  </button>
+</div>
+
+<div class="summary-bar" id="summaryBar"></div>
+
+<div class="container">
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- GOLD TAB -->
+  <div class="tab-panel active" id="panelGold">
+    <div class="controls-row">
+      <div class="view-toggle" id="viewToggleGold">
+        <button class="active" onclick="setView('gold','cards', this)">Cards</button>
+        <button onclick="setView('gold','table', this)">Tabela</button>
+      </div>
+      <div class="filter-buttons" id="filterGold">
+        <button class="filter-btn active" onclick="setFilter('gold','all',this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('gold','miner',this)">Mineradoras</button>
+        <button class="filter-btn" onclick="setFilter('gold','streamer',this)">Streamers</button>
+        <button class="filter-btn" onclick="setFilter('gold','etf',this)">ETFs</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="cardsGold"></div>
+    <div class="table-wrapper" id="tableGold">
+      <table>
+        <thead><tr id="tableHeadGold"></tr></thead>
+        <tbody id="tableBodyGold"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SILVER TAB -->
+  <div class="tab-panel" id="panelSilver">
+    <div class="controls-row">
+      <div class="view-toggle" id="viewToggleSilver">
+        <button class="active" onclick="setView('silver','cards', this)">Cards</button>
+        <button onclick="setView('silver','table', this)">Tabela</button>
+      </div>
+      <div class="filter-buttons" id="filterSilver">
+        <button class="filter-btn active" onclick="setFilter('silver','all',this)">Todos</button>
+        <button class="filter-btn" onclick="setFilter('silver','miner',this)">Mineradoras</button>
+        <button class="filter-btn" onclick="setFilter('silver','etf',this)">ETFs</button>
+      </div>
+    </div>
+    <div class="cards-grid" id="cardsSilver"></div>
+    <div class="table-wrapper" id="tableSilver">
+      <table>
+        <thead><tr id="tableHeadSilver"></tr></thead>
+        <tbody id="tableBodySilver"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== DATA =====================
+// primary: 'gold' = ouro como atividade central, 'silver' = prata, 'both' = ambos
+const GOLD_COMPANIES = [
+  // Majors — Ouro puro
+  { ticker: 'NEM',  name: 'Newmont Corporation',       type: 'miner',    primary: 'gold' },
+  { ticker: 'GOLD', name: 'Barrick Gold Corp',          type: 'miner',    primary: 'gold' },
+  { ticker: 'AEM',  name: 'Agnico Eagle Mines',         type: 'miner',    primary: 'gold' },
+  { ticker: 'KGC',  name: 'Kinross Gold Corp',          type: 'miner',    primary: 'gold' },
+  { ticker: 'AU',   name: 'AngloGold Ashanti',          type: 'miner',    primary: 'gold' },
+  { ticker: 'GFI',  name: 'Gold Fields Ltd',            type: 'miner',    primary: 'gold' },
+  { ticker: 'HMY',  name: 'Harmony Gold Mining',        type: 'miner',    primary: 'gold' },
+  { ticker: 'AGI',  name: 'Alamos Gold Inc',            type: 'miner',    primary: 'gold' },
+  { ticker: 'EGO',  name: 'Eldorado Gold Corp',         type: 'miner',    primary: 'gold' },
+  { ticker: 'BTG',  name: 'B2Gold Corp',                type: 'miner',    primary: 'gold' },
+  { ticker: 'IAG',  name: 'IAMGOLD Corporation',        type: 'miner',    primary: 'gold' },
+  { ticker: 'EQX',  name: 'Equinox Gold Corp',          type: 'miner',    primary: 'gold' },
+  { ticker: 'CGAU', name: 'Centerra Gold Inc',          type: 'miner',    primary: 'gold' },
+  { ticker: 'NGD',  name: 'New Gold Inc',               type: 'miner',    primary: 'gold' },
+  // Ouro + Prata
+  { ticker: 'CDE',  name: 'Coeur Mining Inc',           type: 'miner',    primary: 'both' },
+  { ticker: 'SSRM', name: 'SSR Mining Inc',             type: 'miner',    primary: 'both' },
+  // Royalty & Streaming — Ouro foco principal, mas tambem prata
+  { ticker: 'OR',   name: 'Osisko Gold Royalties',      type: 'streamer', primary: 'gold' },
+  { ticker: 'FNV',  name: 'Franco-Nevada Corp',         type: 'streamer', primary: 'gold' },
+  { ticker: 'WPM',  name: 'Wheaton Precious Metals',    type: 'streamer', primary: 'both' },
+  { ticker: 'RGLD', name: 'Royal Gold Inc',             type: 'streamer', primary: 'gold' },
+  { ticker: 'SAND', name: 'Sandstorm Gold Ltd',         type: 'streamer', primary: 'gold' },
+  // ETFs
+  { ticker: 'GDX',  name: 'VanEck Gold Miners ETF',     type: 'etf',     primary: 'gold' },
+  { ticker: 'GDXJ', name: 'VanEck Junior Gold Miners',  type: 'etf',     primary: 'gold' },
+  { ticker: 'GLD',  name: 'SPDR Gold Shares',           type: 'etf',     primary: 'gold' },
+  { ticker: 'AAAU', name: 'Goldman Sachs Physical Gold', type: 'etf',     primary: 'gold' },
+];
+
+const SILVER_COMPANIES = [
+  // Prata pura
+  { ticker: 'AG',   name: 'First Majestic Silver',      type: 'miner',   primary: 'silver' },
+  { ticker: 'EXK',  name: 'Endeavour Silver Corp',      type: 'miner',   primary: 'silver' },
+  { ticker: 'SVM',  name: 'Silvercorp Metals Inc',      type: 'miner',   primary: 'silver' },
+  { ticker: 'MAG',  name: 'MAG Silver Corp',            type: 'miner',   primary: 'silver' },
+  { ticker: 'SILV', name: 'SilverCrest Metals',         type: 'miner',   primary: 'silver' },
+  { ticker: 'GATO', name: 'Gatos Silver Inc',           type: 'miner',   primary: 'silver' },
+  // Prata + Ouro
+  { ticker: 'PAAS', name: 'Pan American Silver',        type: 'miner',   primary: 'both' },
+  { ticker: 'HL',   name: 'Hecla Mining Company',       type: 'miner',   primary: 'both' },
+  { ticker: 'FSM',  name: 'Fortuna Mining Corp',        type: 'miner',   primary: 'both' },
+  { ticker: 'USAS', name: 'Americas Gold & Silver',     type: 'miner',   primary: 'both' },
+  // ETFs
+  { ticker: 'SLV',  name: 'iShares Silver Trust',       type: 'etf',     primary: 'silver' },
+  { ticker: 'SLVP', name: 'iShares MSCI Silver Miners', type: 'etf',     primary: 'silver' },
+  { ticker: 'PSLV', name: 'Sprott Physical Silver',     type: 'etf',     primary: 'silver' },
+];
+
+const COLUMNS = [
+  { key: 'ticker',        label: 'Ticker',      align: 'left' },
+  { key: 'name',          label: 'Empresa',      align: 'left' },
+  { key: 'type',          label: 'Tipo',         align: 'left' },
+  { key: 'primary',       label: 'Metal',        align: 'left' },
+  { key: 'price',         label: 'Preco (USD)',  align: 'right' },
+  { key: 'change',        label: 'Variacao',     align: 'right' },
+  { key: 'changePercent', label: 'Var %',        align: 'right' },
+  { key: 'week52High',    label: '52W High',     align: 'right' },
+  { key: 'week52Low',     label: '52W Low',      align: 'right' },
+  { key: 'trailingPE',    label: 'P/E Trail',    align: 'right' },
+  { key: 'forwardPE',     label: 'P/E Fwd',      align: 'right' },
+  { key: 'open',          label: 'Abertura',     align: 'right' },
+  { key: 'high',          label: 'Maxima',       align: 'right' },
+  { key: 'low',           label: 'Minima',       align: 'right' },
+  { key: 'volume',        label: 'Volume',       align: 'right' },
+  { key: 'marketCap',     label: 'Market Cap',   align: 'right' },
+];
+
+// ===================== STATE =====================
+let goldData = [], silverData = [];
+let activeTab = 'gold';
+let sortState = { gold: { key: 'marketCap', dir: -1 }, silver: { key: 'marketCap', dir: -1 } };
+let viewState = { gold: 'cards', silver: 'cards' };
+let filterState = { gold: 'all', silver: 'all' };
+let refreshTimer = null, nextRefresh = 0;
+
+// ===================== MOCK DATA =====================
+const MOCK_BASES = {
+  // Gold miners
+  NEM: [58, 127e9], GOLD: [22, 42e9], AEM: [95, 55e9], KGC: [13, 16e9],
+  AU: [38, 18e9], GFI: [22, 17e9], HMY: [14, 10e9], AGI: [25, 12e9],
+  EGO: [20, 6e9], CDE: [9, 5e9], BTG: [4.5, 6e9], IAG: [7, 4.5e9],
+  EQX: [8, 3.8e9], SSRM: [7, 3e9], CGAU: [8.5, 2.5e9], NGD: [3.5, 2.5e9],
+  OR: [22, 4e9],
+  // Gold streamers
+  FNV: [160, 38e9], WPM: [72, 32e9], RGLD: [155, 10e9], SAND: [8, 2.8e9],
+  // Gold ETFs
+  GDX: [52, 0], GDXJ: [62, 0], GLD: [520, 0], AAAU: [56, 0],
+  // Silver miners
+  PAAS: [28, 11e9], AG: [9, 3.2e9], HL: [12, 8e9], EXK: [5, 1.5e9],
+  FSM: [8, 2.8e9], SVM: [6, 1.5e9], MAG: [22, 2.2e9], SILV: [12, 2.5e9],
+  USAS: [1.5, 0.3e9], GATO: [15, 1.2e9],
+  // Silver ETFs
+  SLV: [52, 0], SLVP: [18, 0], PSLV: [15, 0],
+};
+
+function generateMockData(companies) {
+  return companies.map(c => {
+    const [base, cap] = MOCK_BASES[c.ticker] || [10, 1e9];
+    const vol = base * 0.03;
+    const change = (Math.random() - 0.45) * vol;
+    const price = +(base + change).toFixed(2);
+    const high = +(price + Math.random() * vol * 0.5).toFixed(2);
+    const low = +(price - Math.random() * vol * 0.5).toFixed(2);
+    return {
+      symbol: c.ticker,
+      regularMarketPrice: price,
+      regularMarketOpen: +(base + (Math.random() - 0.5) * vol * 0.3).toFixed(2),
+      regularMarketDayHigh: Math.max(high, price),
+      regularMarketDayLow: Math.min(low, price),
+      regularMarketVolume: Math.floor(2e6 + Math.random() * 15e6),
+      marketCap: cap,
+      chartPreviousClose: base,
+      fiftyTwoWeekHigh: +(base * (1.3 + Math.random() * 0.4)).toFixed(2),
+      fiftyTwoWeekLow: +(base * (0.4 + Math.random() * 0.25)).toFixed(2),
+      trailingPE: c.type === 'etf' ? null : +(8 + Math.random() * 30).toFixed(2),
+      forwardPE: c.type === 'etf' ? null : +(6 + Math.random() * 25).toFixed(2),
+    };
+  });
+}
+
+// ===================== FETCHING =====================
+const CORS_PROXIES = [
+  'https://corsproxy.io/?',
+  'https://api.allorigins.win/raw?url=',
+];
+
+async function fetchWithProxy(url) {
+  for (const proxy of CORS_PROXIES) {
+    try {
+      const res = await fetch(proxy + encodeURIComponent(url), { signal: AbortSignal.timeout(10000) });
+      if (res.ok) return await res.json();
+    } catch (_) {}
+  }
+  throw new Error('All proxies failed');
+}
+
+async function fetchQuotes(companies) {
+  const tickers = companies.map(c => c.ticker).join(',');
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers}`;
+  const data = await fetchWithProxy(url);
+  if (data?.quoteResponse?.result) return data.quoteResponse.result;
+  throw new Error('Invalid response');
+}
+
+function processQuotes(companies, quotes) {
+  return companies.map(company => {
+    const q = quotes.find(r => r.symbol === company.ticker);
+    if (!q) return null;
+    const price = q.regularMarketPrice || 0;
+    const prevClose = q.chartPreviousClose || q.regularMarketOpen || price;
+    const change = +(price - prevClose).toFixed(2);
+    const changePercent = prevClose ? +((change / prevClose) * 100).toFixed(2) : 0;
+    return {
+      ticker: company.ticker,
+      name: company.name,
+      type: company.type,
+      primary: company.primary,
+      price, change, changePercent,
+      open: q.regularMarketOpen || 0,
+      high: q.regularMarketDayHigh || 0,
+      low: q.regularMarketDayLow || 0,
+      volume: q.regularMarketVolume || 0,
+      marketCap: q.marketCap || 0,
+      week52High: q.fiftyTwoWeekHigh || 0,
+      week52Low: q.fiftyTwoWeekLow || 0,
+      trailingPE: q.trailingPE || null,
+      forwardPE: q.forwardPE || null,
+    };
+  }).filter(Boolean);
+}
+
+async function fetchAllData() {
+  const dot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  dot.className = 'status-dot loading';
+  statusText.textContent = 'Atualizando...';
+
+  let usedMock = false;
+
+  // Fetch gold
+  try {
+    const quotes = await fetchQuotes(GOLD_COMPANIES);
+    goldData = processQuotes(GOLD_COMPANIES, quotes);
+  } catch (_) {
+    goldData = processQuotes(GOLD_COMPANIES, generateMockData(GOLD_COMPANIES));
+    usedMock = true;
+  }
+
+  // Fetch silver
+  try {
+    const quotes = await fetchQuotes(SILVER_COMPANIES);
+    silverData = processQuotes(SILVER_COMPANIES, quotes);
+  } catch (_) {
+    silverData = processQuotes(SILVER_COMPANIES, generateMockData(SILVER_COMPANIES));
+    usedMock = true;
+  }
+
+  if (usedMock) {
+    dot.className = 'status-dot offline';
+    statusText.textContent = 'Dados simulados';
+    showError('Nao foi possivel conectar ao Yahoo Finance. Exibindo dados simulados.');
+  } else {
+    dot.className = 'status-dot live';
+    statusText.textContent = 'Ao vivo';
+    hideError();
+  }
+
+  document.getElementById('goldCount').textContent = goldData.length;
+  document.getElementById('silverCount').textContent = silverData.length;
+  document.getElementById('loadingOverlay').classList.add('hidden');
+  render();
+  scheduleRefresh();
+}
+
+// ===================== TAB SWITCHING =====================
+function switchTab(tab) {
+  activeTab = tab;
+  document.getElementById('tabGold').className = 'metal-tab' + (tab === 'gold' ? ' active-gold' : '');
+  document.getElementById('tabSilver').className = 'metal-tab' + (tab === 'silver' ? ' active-silver' : '');
+  document.getElementById('panelGold').className = 'tab-panel' + (tab === 'gold' ? ' active' : '');
+  document.getElementById('panelSilver').className = 'tab-panel' + (tab === 'silver' ? ' active' : '');
+
+  const icon = document.getElementById('logoIcon');
+  if (tab === 'gold') {
+    icon.className = 'logo-icon gold-icon';
+    icon.textContent = 'Au';
+  } else {
+    icon.className = 'logo-icon silver-icon';
+    icon.textContent = 'Ag';
+  }
+
+  renderSummary();
+}
+
+// ===================== RENDERING =====================
+function render() {
+  renderSummary();
+  renderPanel('gold');
+  renderPanel('silver');
+}
+
+function getFiltered(tab) {
+  const data = tab === 'gold' ? goldData : silverData;
+  const filter = filterState[tab];
+  if (filter === 'all') return data;
+  return data.filter(d => d.type === filter);
+}
+
+function getSorted(tab) {
+  const data = getFiltered(tab);
+  const { key, dir } = sortState[tab];
+  return [...data].sort((a, b) => {
+    let va = a[key], vb = b[key];
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (typeof va === 'string') return dir * va.localeCompare(vb);
+    return dir * (va - vb);
+  });
+}
+
+function renderSummary() {
+  const bar = document.getElementById('summaryBar');
+  const data = activeTab === 'gold' ? goldData : silverData;
+  if (!data.length) { bar.innerHTML = ''; return; }
+
+  const miners = data.filter(d => d.type !== 'etf');
+  const etfs = data.filter(d => d.type === 'etf');
+  const sorted = [...miners].sort((a, b) => b.marketCap - a.marketCap);
+  const gainers = [...data].sort((a, b) => b.changePercent - a.changePercent);
+  const up = data.filter(s => s.change >= 0).length;
+  const down = data.length - up;
+  const avgChange = miners.length
+    ? (miners.reduce((s, d) => s + d.changePercent, 0) / miners.length).toFixed(2)
+    : '0.00';
+
+  const accent = activeTab === 'gold' ? 'var(--gold)' : 'var(--silver-bright)';
+
+  bar.innerHTML = `
+    ${sorted.length ? `<div class="summary-item">
+      <span class="label">Maior Market Cap</span>
+      <span class="value" style="color:${accent}">${sorted[0].ticker}</span>
+    </div>` : ''}
+    <div class="summary-item">
+      <span class="label">Maior Alta</span>
+      <span class="value up">${gainers[0].ticker} +${gainers[0].changePercent}%</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">Maior Queda</span>
+      <span class="value down">${gainers[gainers.length-1].ticker} ${gainers[gainers.length-1].changePercent}%</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">Media Mineradoras</span>
+      <span class="value ${avgChange >= 0 ? 'up' : 'down'}">${avgChange >= 0 ? '+' : ''}${avgChange}%</span>
+    </div>
+    <div class="summary-item">
+      <span class="label">Altas / Quedas</span>
+      <span class="value"><span class="up">${up}</span> / <span class="down">${down}</span></span>
+    </div>
+    ${etfs.length ? `<div class="summary-item">
+      <span class="label">ETFs</span>
+      <span class="value">${etfs.map(e => `<span class="${e.changePercent >= 0 ? 'up' : 'down'}" style="margin-right:8px">${e.ticker} ${e.changePercent >= 0 ? '+' : ''}${e.changePercent}%</span>`).join('')}</span>
+    </div>` : ''}
+  `;
+}
+
+function renderPanel(tab) {
+  const sorted = getSorted(tab);
+  const metal = tab;
+  const tickerClass = tab === 'gold' ? 'gold-ticker' : 'silver-ticker';
+  const cardClass = tab === 'gold' ? 'gold-card' : 'silver-card';
+
+  // Cards
+  const grid = document.getElementById(`cards${cap(tab)}`);
+  grid.innerHTML = sorted.map(s => `
+    <div class="card ${cardClass} border-${s.primary}">
+      <span class="card-type-badge ${s.type}">${typeLabel(s.type)}</span>
+      <div class="card-header">
+        <div>
+          <div class="card-ticker ${tickerClass}">${s.ticker}</div>
+          <div class="card-name">${s.name}</div>
+          <div class="card-primary">${metalBadge(s.primary)}</div>
+        </div>
+        <span class="card-badge ${s.change >= 0 ? 'up' : 'down'}">
+          ${s.change >= 0 ? 'ALTA' : 'BAIXA'}
+        </span>
+      </div>
+      <div class="card-price">$${s.price.toFixed(2)}</div>
+      <div class="card-change">
+        <span class="${s.change >= 0 ? 'up' : 'down'}">
+          ${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}
+        </span>
+        <span class="${s.changePercent >= 0 ? 'up' : 'down'}">
+          (${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%)
+        </span>
+      </div>
+      <dl class="card-meta">
+        <dt>52W High</dt><dd>$${s.week52High.toFixed(2)}</dd>
+        <dt>52W Low</dt><dd>$${s.week52Low.toFixed(2)}</dd>
+        <dt>P/E Trail</dt><dd>${fmtPE(s.trailingPE)}</dd>
+        <dt>P/E Fwd</dt><dd>${fmtPE(s.forwardPE)}</dd>
+        <dt>Abertura</dt><dd>$${s.open.toFixed(2)}</dd>
+        <dt>Volume</dt><dd>${fmtVol(s.volume)}</dd>
+        ${s.marketCap ? `<dt>Market Cap</dt><dd>${fmtCap(s.marketCap)}</dd>` : ''}
+      </dl>
+    </div>
+  `).join('');
+
+  // Table
+  const { key: sk, dir: sd } = sortState[tab];
+  document.getElementById(`tableHead${cap(tab)}`).innerHTML = COLUMNS.map(col => `
+    <th class="${sk === col.key ? 'sorted' : ''}"
+        style="text-align:${col.align}"
+        onclick="sortBy('${tab}','${col.key}')">
+      ${col.label}
+      ${sk === col.key ? `<span class="sort-arrow">${sd === 1 ? '&#9650;' : '&#9660;'}</span>` : ''}
+    </th>
+  `).join('');
+
+  document.getElementById(`tableBody${cap(tab)}`).innerHTML = sorted.map(s => `
+    <tr>
+      <td class="ticker-cell ${tickerClass}">${s.ticker}</td>
+      <td>${s.name}</td>
+      <td><span class="type-cell ${s.type}">${typeLabel(s.type)}</span></td>
+      <td>${metalBadge(s.primary)}</td>
+      <td style="text-align:right;font-weight:600">$${s.price.toFixed(2)}</td>
+      <td style="text-align:right" class="${s.change >= 0 ? 'up' : 'down'}">
+        ${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}
+      </td>
+      <td style="text-align:right;font-weight:600" class="${s.changePercent >= 0 ? 'up' : 'down'}">
+        ${s.changePercent >= 0 ? '+' : ''}${s.changePercent.toFixed(2)}%
+      </td>
+      <td style="text-align:right">$${s.week52High.toFixed(2)}</td>
+      <td style="text-align:right">$${s.week52Low.toFixed(2)}</td>
+      <td style="text-align:right">${fmtPE(s.trailingPE)}</td>
+      <td style="text-align:right">${fmtPE(s.forwardPE)}</td>
+      <td style="text-align:right">$${s.open.toFixed(2)}</td>
+      <td style="text-align:right">$${s.high.toFixed(2)}</td>
+      <td style="text-align:right">$${s.low.toFixed(2)}</td>
+      <td style="text-align:right">${fmtVol(s.volume)}</td>
+      <td style="text-align:right">${fmtCap(s.marketCap)}</td>
+    </tr>
+  `).join('');
+}
+
+// ===================== CONTROLS =====================
+function setView(tab, view, btn) {
+  viewState[tab] = view;
+  const container = document.getElementById(`viewToggle${cap(tab)}`);
+  container.querySelectorAll('button').forEach(b => b.classList.remove('active', 'active-silver-btn'));
+  btn.classList.add(tab === 'silver' ? 'active-silver-btn' : 'active');
+  document.getElementById(`cards${cap(tab)}`).style.display = view === 'cards' ? 'grid' : 'none';
+  document.getElementById(`table${cap(tab)}`).style.display = view === 'table' ? 'block' : 'none';
+}
+
+function setFilter(tab, filter, btn) {
+  filterState[tab] = filter;
+  const container = document.getElementById(`filter${cap(tab)}`);
+  container.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderPanel(tab);
+}
+
+function sortBy(tab, key) {
+  const s = sortState[tab];
+  if (s.key === key) s.dir *= -1;
+  else { s.key = key; s.dir = key === 'ticker' || key === 'name' || key === 'type' || key === 'primary' ? 1 : -1; }
+  renderPanel(tab);
+}
+
+// ===================== HELPERS =====================
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function typeLabel(t) { return t === 'etf' ? 'ETF' : t === 'streamer' ? 'Streamer' : 'Miner'; }
+function fmtPE(v) { return v != null ? v.toFixed(2) : 'N/A'; }
+
+function metalBadge(primary) {
+  if (primary === 'gold') {
+    return `<span class="metal-indicator primary-gold"><span class="mi-dot dot-g"></span>Ouro</span>`;
+  }
+  if (primary === 'silver') {
+    return `<span class="metal-indicator primary-silver"><span class="mi-dot dot-s"></span>Prata</span>`;
+  }
+  if (primary === 'both') {
+    return `<span class="metal-indicator primary-both"><span class="mi-dot-dual"><span class="mi-dot dot-g"></span><span class="mi-dot dot-s"></span></span>Au+Ag</span>`;
+  }
+  return '';
+}
+
+function fmtVol(v) {
+  if (v >= 1e9) return (v / 1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return (v / 1e6).toFixed(1) + 'M';
+  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+  return v.toLocaleString();
+}
+
+function fmtCap(v) {
+  if (!v) return 'N/A';
+  if (v >= 1e12) return '$' + (v / 1e12).toFixed(1) + 'T';
+  if (v >= 1e9) return '$' + (v / 1e9).toFixed(1) + 'B';
+  if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+  return '$' + v.toLocaleString();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('errorBanner').style.display = 'none'; }
+
+function scheduleRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer);
+  nextRefresh = 60;
+  const el = document.getElementById('countdown');
+  refreshTimer = setInterval(() => {
+    nextRefresh--;
+    el.textContent = `Refresh em ${nextRefresh}s`;
+    if (nextRefresh <= 0) { clearInterval(refreshTimer); fetchAllData(); }
+  }, 1000);
+}
+
+// ===================== INIT =====================
+fetchAllData();
+</script>
+</body>
+</html>
