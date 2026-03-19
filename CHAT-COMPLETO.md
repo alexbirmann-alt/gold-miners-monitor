@@ -67,7 +67,7 @@
 ## Mensagem 9 — Usuario
 > nao seria mais simples mudar a fonte de dados?
 
-**Resposta:** Sim. Migrei para Finnhub API (chave gratuita: [REDACTED]). Funciona direto do browser sem problemas de CORS.
+**Resposta:** Sim. Migrei para Finnhub API (chave gratuita: [REDACTED_API_KEY]). Funciona direto do browser sem problemas de CORS.
 
 ---
 
@@ -139,7 +139,7 @@ D:\Users\Alex\Documents\Claude AI\
 
 ## API
 - **Finnhub:** https://finnhub.io
-- **Key:** [REDACTED]
+- **Key:** [REDACTED_API_KEY]
 
 ## Commits (em ordem)
 1. Initial app com mineradoras de ouro + prata, abas, Finnhub API

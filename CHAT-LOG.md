@@ -12,7 +12,7 @@ Web app single-page (HTML puro) que monitora mineradoras de ouro e prata listada
 
 ### Stack
 - HTML/CSS/JS puro (sem frameworks)
-- API: Finnhub (key: [REDACTED])
+- API: Finnhub (key: [REDACTED_API_KEY])
 - Hospedagem: GitHub Pages
 
 ---
